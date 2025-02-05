@@ -1,0 +1,5 @@
+﻿timestamp,2024-12-02T10:50:00Z,,,
+type,org.tytysh.fit_bot.entity.Dish,,,
+,,,,
+id,userId,name,products,portions
+1,,salad with fish,"132, 613, 622, 629, ","100, 40, 40, 40"
