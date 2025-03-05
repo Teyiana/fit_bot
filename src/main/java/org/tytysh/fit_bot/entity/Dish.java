@@ -3,6 +3,9 @@ package org.tytysh.fit_bot.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.Type;
+import org.tytysh.fit_bot.dto.PortionDTO;
+
+import java.util.List;
 
 
 @Data
@@ -14,20 +17,12 @@ public class Dish {
     @Column(name = "id")
     private long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
 
     @Column(name = "name")
     private String name;
 
-    @Type(CustomLongArrayType.class)
-    @Column(name = "products", columnDefinition = "bigint[]")
-    private Long [] products;
-
-    @Type(CustomLongArrayType.class)
-    @Column(name = "portions", columnDefinition = "bigint[]")
-    private Long [] portions;
+    @OneToMany
+    @JoinColumn(name = "dish_id")
+    private List<Portion> portions;
 
 }

@@ -15,7 +15,7 @@ import java.util.Map;
 public class GetInfoCommand implements SendCommand {
 
     public static final String COMMAND_NAME = "/getInfo";
-    public static final String BUTTON_TEXT = "Отримати інфо";
+    public static final String BUTTON_TEXT = "Get info";
 
 
     @Override
@@ -44,11 +44,6 @@ public class GetInfoCommand implements SendCommand {
     @Override
     public String createCallback(Map<String, Object> params) {
         return SendCommand.super.createCallback(params);
-    }
-
-    public String getLastCreatedDish(ChatSession chatSession) {
-        return "Last created dish";
-
     }
 
 

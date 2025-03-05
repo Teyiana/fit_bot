@@ -1,7 +1,6 @@
 package org.tytysh.fit_bot.commands;
 
 import org.springframework.stereotype.Component;
-import org.tytysh.fit_bot.config.ChatMessage;
 import org.tytysh.fit_bot.config.ChatSession;
 import org.tytysh.fit_bot.dto.InlineButton;
 
@@ -14,8 +13,8 @@ import java.util.Map;
 public class StartCommand implements SendCommand {
 
     public static final String COMMAND_NAME = "/start";
-    public static final String GREETINGS_TEXT = "Ласкаво просимо. Цей бот допоможе відслідковувати кількість вжитих калорій";
-    private static final String BUTTON_TEXT = "Почати";
+   public static final String GREETINGS_TEXT = "Welcome. This bot will help you track your calorie intake";
+    private static final String BUTTON_TEXT = "Start";
 
     private final GetInfoCommand getInfoCommand;
     private final AddMealCommand addMealCommand;

@@ -51,6 +51,10 @@ public class ChatSession {
 
     public void addResponseMessage(String message) {
         ChatMessage lastMessage = getLastChatMessage();
+        addResponseMessage(message, lastMessage);
+    }
+
+    public void addResponseMessage(String message, ChatMessage lastMessage) {
         if (isMessageProcessed(lastMessage)) throw new IllegalStateException("No chat message for add response");
         String old = lastMessage.getResponseMessage();
         lastMessage.setResponseMessage(old == null ? message : old + "\n" + message);

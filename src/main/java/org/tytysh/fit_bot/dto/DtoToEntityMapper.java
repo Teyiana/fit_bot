@@ -1,9 +1,6 @@
 package org.tytysh.fit_bot.dto;
 
-import org.tytysh.fit_bot.entity.Meal;
-import org.tytysh.fit_bot.entity.MealFood;
-import org.tytysh.fit_bot.entity.Product;
-import org.tytysh.fit_bot.entity.User;
+import org.tytysh.fit_bot.entity.*;
 
 
 import java.util.Locale;
@@ -72,6 +69,27 @@ public interface DtoToEntityMapper {
         return mealFoodDTO;
     }
 
+    static DishDTO toDto(Dish entity) {
+        if (entity == null) {
+            return null;
+        }
+        DishDTO dto = new DishDTO();
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setPortions(entity.getPortions().stream().map(DtoToEntityMapper::toDto).toList());
+        return dto;
+    }
+
+    static Dish toEntity(DishDTO dishDTO) {
+        Dish dish = new Dish();
+        dish.setId(dishDTO.getId());
+        dish.setName(dishDTO.getName());
+        dish.setPortions(dishDTO.getPortions().stream().map(DtoToEntityMapper::toEntity).toList());
+        return dish;
+    }
+
+
+
     static ProductDTO toDto(Product entity) {
         ProductDTO dto = new ProductDTO();
         dto.setId(entity.getId());
@@ -102,6 +120,31 @@ public interface DtoToEntityMapper {
         mealFood.setQuantity(mealFoodDTO.getQuantity());
         return mealFood;
 
+    }
+
+    static FoodTypeDTO toDto(FoodType foodType) {
+        FoodTypeDTO foodTypeDTO = new FoodTypeDTO();
+        foodTypeDTO.setId(foodType.getId());
+        foodTypeDTO.setName(foodType.getName());
+        return foodTypeDTO;
+    }
+
+    static Portion toEntity(PortionDTO portionDTO) {
+        Portion portion = new Portion();
+        portion.setId(portionDTO.getId());
+        portion.setDishId(portionDTO.getDishId());
+        portion.setProduct(portionDTO.getProduct() != null ? DtoToEntityMapper.toEntity(portionDTO.getProduct()) : null);
+        portion.setQuantity(portionDTO.getQuantity());
+        return portion;
+    }
+
+    static PortionDTO toDto(Portion portion) {
+        PortionDTO portionDTO = new PortionDTO();
+        portionDTO.setId(portion.getId());
+        portionDTO.setDishId(portion.getDishId());
+        portionDTO.setProduct(DtoToEntityMapper.toDto(portion.getProduct()));
+        portionDTO.setQuantity(portion.getQuantity());
+        return portionDTO;
     }
 
 }

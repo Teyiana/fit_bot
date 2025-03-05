@@ -56,12 +56,9 @@ public class DishParser extends CsvParser<Dish> {
                     if (user.isEmpty()) {
                         throw new IllegalArgumentException("User not found: " + userId);
                     }
-                    entity.setUser(user.get());
                 });
                 entity.setName((matcher.group(3)));
-                entity.setProducts(parseLongArray(matcher.group(4)));
-                entity.setPortions(parseLongArray(matcher.group(5)));
-                assert entity.getProducts().length == entity.getPortions().length;
+                entity.setPortions(entity.getPortions());
                 dto.getData().add(entity);
             }
         }

@@ -9,11 +9,8 @@ public class DishDTO {
 
     private long id;
 
-    private long userId;
-
     private String name;
 
     private List<PortionDTO> portions;
-
 
 }

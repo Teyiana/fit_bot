@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.tytysh.fit_bot.BotConstance.*;
+
 import static org.tytysh.fit_bot.dto.DtoToEntityMapper.toDto;
 import static org.tytysh.fit_bot.dto.DtoToEntityMapper.toEntity;
 import static org.tytysh.fit_bot.i18n.ResponseMessages.*;
@@ -42,6 +43,7 @@ public class UserService implements ChatSessionContextKeys {
             }
         }
         UserDTO user = chatSession.getUserDTO();
+        if (isUserRegistered(user)) return;
         String message = chatSession.getLastMessage();
         if (!checkUserName(chatSession, user, message)) return;
         if (!checkUserEmail(chatSession, user, message)) return;
@@ -49,23 +51,31 @@ public class UserService implements ChatSessionContextKeys {
         if (!checkUserWeight(chatSession, user, message)) return;
         if (!checkUserSex(chatSession, user, message)) return;
 
-         chatSession.addResponseMessage(USER_REGISTRATION_COMPLETE.getLocalizedMessage());
+        chatSession.addResponseMessage(USER_REGISTRATION_COMPLETE.getLocalizedMessage());
+    }
+
+    private boolean isUserRegistered(UserDTO user) {
+        return user.getName() != null
+                && user.getEmail() != null
+                && user.getDateOfBirth() != null
+                && user.getWeight() != 0
+                && user.getSex() != null;
     }
 
     private boolean checkUserSex(ChatSession chatSession, UserDTO user, String message) {
         if (user.getSex() == null) {
             boolean isRequireSex = Boolean.TRUE.equals(chatSession.getSessionContext(REQUIRE_USER_SEX));
-            if (isRequireSex){
+            if (isRequireSex) {
                 Sex sex = parseSex(message);
                 if (sex != null) {
                     user.setSex(sex);
                     updateUser(user);
                     chatSession.removeSessionContext(REQUIRE_USER_SEX);
                     return true;
-            }
-            new IllegalArgumentException("Invalid sex");
+                }
+                chatSession.addResponseMessage(INVALID_SEX.getLocalizedMessage());
+                chatSession.setMessageProcessed();
                 return false;
-
             } else {
                 chatSession.addResponseMessage(ENTER_SEX.getLocalizedMessage());
                 chatSession.setMessageProcessed();
@@ -73,6 +83,8 @@ public class UserService implements ChatSessionContextKeys {
                 return false;
             }
         }
+
+
         return true;
     }
 
@@ -87,7 +99,8 @@ public class UserService implements ChatSessionContextKeys {
                     chatSession.removeSessionContext(REQUIRE_USER_WEIGHT);
                     return true;
                 }
-                new IllegalArgumentException("Invalid weight");
+                chatSession.addResponseMessage(INVALID_WEIGHT.getLocalizedMessage());
+                chatSession.setMessageProcessed();
                 return false;
             } else {
                 chatSession.addResponseMessage(ENTER_WEIGHT.getLocalizedMessage());
@@ -110,9 +123,9 @@ public class UserService implements ChatSessionContextKeys {
                     chatSession.removeSessionContext(REQUIRE_USER_DATE_OF_BERTH);
                     return true;
                 }
-                new IllegalArgumentException("Invalid date of birth");
+                chatSession.addResponseMessage(INVALID_DATE_OF_BERTH.getLocalizedMessage());
+                chatSession.setMessageProcessed();
                 return false;
-
             } else {
                 chatSession.addResponseMessage(ENTER_DATE_OF_BERTH.getLocalizedMessage());
                 chatSession.setMessageProcessed();
@@ -134,18 +147,18 @@ public class UserService implements ChatSessionContextKeys {
                     chatSession.removeSessionContext(REQUIRE_USER_EMAIL);
                     return true;
                 }
-                new IllegalArgumentException("Invalid email address");
+                chatSession.addResponseMessage(INVALID_EMAIL.getLocalizedMessage());
+                chatSession.setMessageProcessed();
                 return false;
-
-                } else {
-                    chatSession.addResponseMessage(ENTER_EMAIL.getLocalizedMessage());
-                    chatSession.setMessageProcessed();
-                    chatSession.setSessionContext(REQUIRE_USER_EMAIL, true);
-                    return false;
-                }
+            } else {
+                chatSession.addResponseMessage(ENTER_EMAIL.getLocalizedMessage());
+                chatSession.setMessageProcessed();
+                chatSession.setSessionContext(REQUIRE_USER_EMAIL, true);
+                return false;
             }
-            return true;
         }
+        return true;
+    }
 
     private boolean checkUserName(ChatSession chatSession, UserDTO user, String message) {
         if (user.getName() == null) {
@@ -233,7 +246,6 @@ public class UserService implements ChatSessionContextKeys {
         List<User> entityList = userRepository.findAll();
         return entityList.stream().map(DtoToEntityMapper::toDto).toList();
     }
-
 
 
 }

@@ -5,7 +5,6 @@ import org.tytysh.fit_bot.config.ChatMessage;
 import org.tytysh.fit_bot.config.ChatSession;
 import org.tytysh.fit_bot.dto.InlineButton;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public interface Command {
         if (chatSession.isMessageProcessed(chatMessage)) {
             return;
         }
-        chatMessage.setResponseMessage(message);
+        chatSession.addResponseMessage(message, chatMessage);
         chatMessage.setKeyboard(keyboard);
     }
 

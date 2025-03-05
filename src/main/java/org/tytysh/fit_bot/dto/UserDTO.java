@@ -29,4 +29,5 @@ public class UserDTO {
     public boolean isFill() {
         return getEmail() !=null && getDateOfBirth() != null && getSex() != null && getWeight() > 0;
     }
+
 }

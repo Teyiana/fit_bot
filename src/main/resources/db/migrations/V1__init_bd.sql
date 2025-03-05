@@ -75,3 +75,11 @@ CREATE TABLE IF NOT EXISTS import_history(
 
 );
 
+CREATE TABLE IF NOT EXISTS dish_portion(
+                                                id BIGSERIAL  PRIMARY KEY,
+                                                dish_id BIGINT NOT NULL,
+                                                product_id BIGINT NOT NULL,
+                                                quantity BIGINT NOT NULL,
+                                                FOREIGN KEY (dish_id) REFERENCES dish(id) ON DELETE CASCADE,
+                                                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
