@@ -1,5 +1,6 @@
 package org.tytysh.fit_bot.service;
 
+import org.springframework.stereotype.Service;
 import org.tytysh.fit_bot.dao.MealFoodRepository;
 import org.tytysh.fit_bot.dao.MealRepository;
 import org.tytysh.fit_bot.dao.ProductRepository;
@@ -9,6 +10,7 @@ import org.tytysh.fit_bot.entity.MealFood;
 
 import java.util.List;
 
+@Service
 public class MealFoodService {
     private final MealFoodRepository mealFoodRepository;
     private final ProductRepository productRepository;

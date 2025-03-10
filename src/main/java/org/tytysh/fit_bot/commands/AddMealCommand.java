@@ -74,7 +74,7 @@ public class AddMealCommand implements SendCommand, Buttons {
     private void selectDish(ChatSession chatSession) {
         List<DishDTO> userDishes =  dishService.getAllDishes();
         if (userDishes.isEmpty()) {
-            setResponseMessage(chatSession, HAVE_NO_MEALS.getLocalizedMessage(), getGeneralStepsKeyboard(chatSession));
+            setResponseMessage(chatSession, HAVE_NO_DISHES.getLocalizedMessage(), getGeneralStepsKeyboard(chatSession));
         } else {
             setResponseMessage(chatSession, SELECT_DISH_FOR_MEAL.getLocalizedMessage(), getDishesListKeyboard(chatSession, userDishes));
         }

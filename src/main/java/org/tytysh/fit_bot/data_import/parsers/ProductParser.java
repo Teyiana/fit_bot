@@ -1,29 +1,37 @@
 package org.tytysh.fit_bot.data_import.parsers;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import org.springframework.stereotype.Component;
+import org.tytysh.fit_bot.dao.FoodTypeRepository;
 import org.tytysh.fit_bot.data_import.CsvImportDTO;
 import org.tytysh.fit_bot.data_import.CsvParser;
+import org.tytysh.fit_bot.data_import.parsers.util.DoubleParser;
+import org.tytysh.fit_bot.data_import.parsers.util.IntegerParser;
+import org.tytysh.fit_bot.data_import.parsers.util.LongParser;
+import org.tytysh.fit_bot.data_import.parsers.util.StringParser;
 import org.tytysh.fit_bot.entity.FoodType;
 import org.tytysh.fit_bot.entity.Product;
-import org.tytysh.fit_bot.entity.User;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Component
 public class ProductParser extends CsvParser<Product> {
 
     private static final String[] HEADERS = {"id", "name", "type_id", "gram", "protein", "fat", "carbohydrates", "calories"};
+    private IntegerParser integerParser = new IntegerParser();
+    private StringParser stringParser = new StringParser();
+    private LongParser longParser = new LongParser();
+    private DoubleParser doubleParser = new DoubleParser();
 
-    protected ProductParser() {
+    private final FoodTypeRepository foodTypeRepository;
+
+    protected ProductParser(FoodTypeRepository foodTypeRepository) {
         super(Product.class);
+        this.foodTypeRepository = foodTypeRepository;
     }
 
     @Override
@@ -49,28 +57,40 @@ public class ProductParser extends CsvParser<Product> {
         }
 
         while ((line = reader.readLine()) != null) {
-            String[] values = line.split(",");
-            Product entity = new Product();
-            entity.setId(Integer.parseInt(values[0]));
-            entity.setName(String.valueOf(values[1]));
-            final int typeId = Integer.parseInt(values[2]);
-            dto.getAfterImportActions().add(importData -> {
-                CsvImportDTO<FoodType> types = (CsvImportDTO<FoodType>) importData.get(FoodType.class);
-                Optional<FoodType> foodType = types.getData().stream().filter(t -> t.getId() == typeId).findFirst();
-                if (foodType.isEmpty()) {
-                    throw new IllegalArgumentException("Type not found: " + typeId);
-                }
-                entity.setType(foodType.get());
-            });
-
-            entity.setGram(Integer.parseInt(values[3]));
-            entity.setProtein(Double.parseDouble(values[4]));
-            entity.setFat(Double.parseDouble(values[5]));
-            entity.setCarbohydrates(Double.parseDouble(values[6]));
-            entity.setCalories(Double.parseDouble(values[7]));
-            results.add(entity);
+            parseRow(line, dto);
         }
 
         return dto;
     }
+
+    private void parseRow (String row, CsvImportDTO<Product> importDTO) {
+        try {
+            Product product = new Product();
+            int index = 0;
+            index = integerParser.parse(row, index, product::setId);
+            index = stringParser.parse(row, index, product::setName);
+            index = longParser.parse(row, index, foodTypeId -> importDTO.getAfterImportActions().add(importData -> {
+                product.setType(findFoodType(foodTypeId, importData));
+            }));
+            index = integerParser.parse(row, index, product::setGram);
+            index = doubleParser.parse(row, index, product::setProtein);
+            index = doubleParser.parse(row, index, product::setFat);
+            index = doubleParser.parse(row, index, product::setCarbohydrates);
+            index = doubleParser.parse(row, index, product::setCalories);
+            importDTO.getData().add(product);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse row: " + row, e);
+        }
+    }
+
+    private FoodType findFoodType(long foodTypeId, Map<Class<?>, CsvImportDTO<?>> importData) {
+        CsvImportDTO<FoodType> foodTypeCsvImportDTO = (CsvImportDTO<FoodType>) importData.get(FoodType.class);
+        for (FoodType foodType : foodTypeCsvImportDTO.getData()) {
+            if (foodType.getId() == foodTypeId) {
+                return foodType;
+            }
+        }
+        return foodTypeRepository.findById(foodTypeId).orElseThrow(() -> new RuntimeException("Food type not found: " + foodTypeId));
+    }
+
 }

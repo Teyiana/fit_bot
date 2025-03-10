@@ -2,14 +2,15 @@ package org.tytysh.fit_bot.data_import;
 
 
 import com.opencsv.CSVReader;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class CsvParserService {
@@ -19,53 +20,92 @@ public class CsvParserService {
     private static final String DB_URL = "jdbc:postgresql://localhost:5432/fit-bot-db";
     private static final String DB_USER = "postgres";
     private static final String DB_PASSWORD = "password";
-    private static final String CSV_FILE_PATH = "/import_csv";
+    private static final String CSV_FILE_PATH_DISH = "/import_csv/dish.csv";
+    private static final String CSV_FILE_PATH_FOOD_TYPE = "/import_csv/food_type.csv";
+    private static final String CSV_FILE_PATH_PRODUCTS = "/import_csv/products.csv";
 
+    private static final String[] CSV_FILES = {
+            "/import_csv/dish.csv",
+            "/import_csv/food_type.csv",
+            "/import_csv/products.csv"
+    };
+
+
+    @PostConstruct
     public void importCsv() {
         Map<String, CsvImportDTO<?>> csvData = new HashMap<>();
-        try (InputStream inputStream = getClass().getResourceAsStream(CSV_FILE_PATH);
-             CSVReader reader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8))) {
-            String[] values;
-            while ((values = reader.readNext()) != null) {
-                String type = values[0];
-                String path = values[1];
-                CsvImportDTO<?> csvImportDTO = parseCsv(path);
-                csvData.put(type, csvImportDTO);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to import CSV file", e);
+        for (String csvPath : CSV_FILES) {
+            CsvImportDTO<?> csvImportDTO = parseCsv(csvPath);
+            csvData.put(csvPath, csvImportDTO);
         }
+        Map<Class<?>, CsvImportDTO<?>> imports = new HashMap<>();
+        for (CsvImportDTO<?> csvImportDTO : csvData.values()) {
+            putOrMerge(csvImportDTO.getType(), imports, csvImportDTO);
+        }
+        imports.forEach((type, importDTO) -> {
+            importDTO.getAfterImportActions().forEach(action -> action.afterImport(imports));
+            persist(importDTO);
+        });
     }
 
+    private void persist(CsvImportDTO<?> importDTO) {
+
+
+    }
+
+    private <T> void putOrMerge(Class<T> type, Map<Class<?>, CsvImportDTO<?>> imports, CsvImportDTO<?> importDTO) {
+        CsvImportDTO<T> existing = (CsvImportDTO<T>) imports.get(type);
+        if (existing == null) {
+            imports.put(type, importDTO);
+        } else {
+            importDTO.getData().forEach(d -> existing.getData().add((T) d));
+            existing.getAfterImportActions().addAll(importDTO.getAfterImportActions());
+        }
+    }
 
     public CsvImportDTO<?> parseCsv(String resourcePath) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(getClass().getResourceAsStream(resourcePath)), StandardCharsets.UTF_8))) {
+        try (InputStream inputStream = getClass().getResourceAsStream(resourcePath)) {
+            if (inputStream == null) {
+                throw new FileNotFoundException("Файл не знайдено: " + resourcePath);
+            }
 
-            // Read metadata lines and skip
-            Timestamp timestamp = parseTimestamp(reader.readLine()); // Skip: timestamp, 2024-11-30T14:00:00
-            String type = parseType(reader.readLine()); // Skip: type, example
-            CsvParser<?> parser = parsersRegistry.getParser(type);
-            if (parser != null) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                Timestamp timestamp = parseTimestamp(reader.readLine());
+                String type = parseType(reader.readLine());
+
+                CsvParser<?> parser = parsersRegistry.getParser(type);
+                if (parser == null) {
+                    throw new IllegalArgumentException("Невідомий тип CSV: " + type);
+                }
                 return parser.parse(reader, timestamp);
-            } else {
-                throw new IllegalArgumentException("Unknown type: " + type);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse CSV file" + resourcePath, e);
+            throw new RuntimeException("Помилка обробки CSV: " + resourcePath, e);
         }
     }
 
-    private Timestamp parseTimestamp(String readLine) {
-        String[] split = readLine.split(",");
-        if (split.length != 2) {
-            throw new IllegalArgumentException("Unexpected timestamp line: " + readLine);
+    private Timestamp parseTimestamp(String readLine) throws ParseException {
+        if (readLine == null) {
+            throw new IllegalArgumentException("Очікувався timestamp, але рядок відсутній");
         }
-        return Timestamp.valueOf(split[1].trim());
+        String[] parts = readLine.split(",", 2);
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Неправильний формат timestamp: " + readLine);
+        }
+
+        String timestampString = parts[1].trim().replace("T", " ").replace("Z", "");
+
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        return new Timestamp(dateFormat.parse(timestampString).getTime());
     }
 
     private String parseType(String readLine) {
+        if (readLine == null) {
+            throw new IllegalArgumentException("Очікувався type, але рядок відсутній");
+        }
         String[] split = readLine.split(",");
         if (split.length != 2) {
             throw new IllegalArgumentException("Unexpected type line: " + readLine);

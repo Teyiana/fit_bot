@@ -18,6 +18,7 @@ public interface ResponseMessages {
     I18nResource MEAL_NOT_SELECTED = new I18nResource(bundleName, ResponseMessages.class, "MEAL_NOT_SELECTED", "Meal not selected");
     I18nResource MEAL_REPEATED = new I18nResource(bundleName, ResponseMessages.class, "MEAL_REPEATED", "Meal repeated");
     I18nResource HAVE_NO_MEALS = new I18nResource(bundleName, ResponseMessages.class, "HAVE_NO_MEALS", "You have no meals");
+    I18nResource HAVE_NO_DISHES = new I18nResource(bundleName, ResponseMessages.class, "HAVE_NO_DISHES", "You have no dishes");
     I18nResource SELECT_DISH_FOR_MEAL = new I18nResource(bundleName, ResponseMessages.class, "SELECT_DISH_FOR_MEAL", "Select dish for meal");
     I18nResource NEW_MEAL_ADDED = new I18nResource(bundleName, ResponseMessages.class, "MEAL_ADDED", " New meal added");
     I18nResource NEW_MEAL_NOT_ADDED = new I18nResource(bundleName, ResponseMessages.class, "MEAL_NOT_ADDED", "New meal not added");
